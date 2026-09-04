@@ -193,7 +193,7 @@ class MinesweeperAI():
         to mark that cell as safe as well.
         """
         self.safes.add(cell)
-        while self.update_knowledge(): #FIXME: computer gets stuck here when knowledge is empty or 1 I think
+        while self.update_knowledge(): 
             pass
 
     def neighbors(self, cell):
