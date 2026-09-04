@@ -29,7 +29,7 @@ class Minesweeper():
             if not self.board[i][j]:
                 self.mines.add((i, j))
                 self.board[i][j] = True
-
+#FIXME: board with more mines than cells will cause an infinite random-placement loop.
         # At first, player has found no mines
         self.mines_found = set()
 
@@ -101,7 +101,7 @@ class Sentence():
     def __str__(self):
         return f"{self.cells} = {self.count}"
 
-    def known_mines(self):
+    def known_mines(self): #FIXME: this is never initialized
         """
         Returns the set of all cells in self.cells known to be mines.
         """
@@ -109,19 +109,19 @@ class Sentence():
         return self.mines
         
 
-    def known_safes(self):
+    def known_safes(self):#FIXME: this is never initialized
         """
         Returns the set of all cells in self.cells known to be safe.
         """
         
         return self.safes
-
+    
     def mark_mine(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be a mine.
         """
-        self.mines.add(cell)
+        self.mines.add(cell) #FIXME: needs to remove cell from the sentence or adjust count
 
 
     def mark_safe(self, cell):
@@ -129,7 +129,8 @@ class Sentence():
         Updates internal knowledge representation given the fact that
         a cell is known to be safe.
         """
-        self.safes.add(cell) 
+        self.safes.add(cell) #FIXME: needs to remove cell from the sentence or adjust count
+
 
 
 class MinesweeperAI():
@@ -153,7 +154,7 @@ class MinesweeperAI():
         # List of sentences about the game known to be true
         self.knowledge = []
 
-    def update_knowledge(self):
+    def update_knowledge(self):#FIXME update_knowledge() can repeatedly generate invalid or duplicate empty sentences and does not robustly propagate known mines/safes.
         """
         Updates the AI's knowledge base by checking for new inferences
         based on existing sentences. Returns True if new inferences were made, False otherwise.
@@ -176,7 +177,7 @@ class MinesweeperAI():
                     if new_sentence not in self.knowledge and new_sentence not in new_inferences:
                         new_inferences.append(new_sentence)
         self.knowledge.extend(new_inferences)
-        return new_inferences.__sizeof__() > 0
+        return len(new_inferences) > 0
 
     def mark_mine(self, cell):
         """
@@ -184,7 +185,7 @@ class MinesweeperAI():
         to mark that cell as a mine as well.
         """
         self.mines.add(cell)
-        while self.update_knowledge(self) > 0:
+        while self.update_knowledge() > 0:
             pass
 
     def mark_safe(self, cell):
@@ -203,7 +204,7 @@ class MinesweeperAI():
         neighbors = set()
         for i in range(cell[0] - 1, cell[0] + 1):
             for j in range(cell[1] - 1, cell[1] + 1):
-                if (i, j) == cell: #doesn't cell also include count? or is it just cell location?
+                if (i, j) == cell: #FIXME: what about corners?
                     continue
                 if 0 <= i < self.height and 0 <= j < self.width:
                     neighbors.add((i, j))
@@ -233,7 +234,7 @@ class MinesweeperAI():
                     if count == 0:
                         #inference if count is 0, all neighbors are safe
                         self.mark_safe(neib)
-                elif neib not in self.mines:
+                elif neib not in self.mines: # FIXME: neighbors neighnors, not neighbors
                     self.knowledge.append(Sentence([self.neighbors(neib)], count))
         while self.update_knowledge():
             pass
