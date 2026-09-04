@@ -106,39 +106,31 @@ class Sentence():
         Returns the set of all cells in self.cells known to be mines.
         """
 
-        if self.count == len(self.cells): #FIXME: or in the list of mines?
-            return self.cells.copy()
-        else:
-            return set()
+        return self.mines
+        
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
         """
         
-        if self.count == 0: #FIXME: or in the list of mines?
-            return self.cells.copy()
-        else:
-            return set()
+        return self.safes
 
     def mark_mine(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be a mine.
         """
-        #self.mines.add(cell) this is not in this class
-        if cell in self.cells:
-            self.cells.remove(cell)
-            self.count -= 1
+        self.mines.add(cell)
+
 
     def mark_safe(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be safe.
         """
-        # self.safes.add(cell) this is not in this class
-        if cell in self.cells:
-            self.cells.remove(cell)
+        self.safes.add(cell) 
+
 
 class MinesweeperAI():
     """
@@ -160,37 +152,6 @@ class MinesweeperAI():
 
         # List of sentences about the game known to be true
         self.knowledge = []
-
-    def mark_mine(self, cell):
-        """
-        Marks a cell as a mine, and updates all knowledge
-        to mark that cell as a mine as well.
-        """
-        self.mines.add(cell)
-        for sentence in self.knowledge:
-            sentence.mark_mine(cell)
-
-    def mark_safe(self, cell):
-        """
-        Marks a cell as safe, and updates all knowledge
-        to mark that cell as safe as well.
-        """
-        self.safes.add(cell)
-        for sentence in self.knowledge:
-            sentence.mark_safe(cell)
-
-    def neighbors(self, cell):
-        """
-        Returns a set of all neighboring cells for a given cell.
-        """
-        neighbors = set()
-        for i in range(cell[0] - 1, cell[0] + 1):
-            for j in range(cell[1] - 1, cell[1] + 1):
-                if (i, j) == cell: #doesn't cell also include count? or is it just cell location?
-                    continue
-                if 0 <= i < self.height and 0 <= j < self.width:
-                    neighbors.add((i, j))
-        return neighbors
 
     def update_knowledge(self):
         """
@@ -216,6 +177,37 @@ class MinesweeperAI():
                         new_inferences.append(new_sentence)
         self.knowledge.extend(new_inferences)
         return new_inferences.__sizeof__() > 0
+
+    def mark_mine(self, cell):
+        """
+        Marks a cell as a mine, and updates all knowledge
+        to mark that cell as a mine as well.
+        """
+        self.mines.add(cell)
+        while self.update_knowledge(self) > 0:
+            pass
+
+    def mark_safe(self, cell):
+        """
+        Marks a cell as safe, and updates all knowledge
+        to mark that cell as safe as well.
+        """
+        self.safes.add(cell)
+        while self.update_knowledge(): #FIXME: computer gets stuck here when knowledge is empty or 1 I think
+            pass
+
+    def neighbors(self, cell):
+        """
+        Returns a set of all neighboring cells for a given cell.
+        """
+        neighbors = set()
+        for i in range(cell[0] - 1, cell[0] + 1):
+            for j in range(cell[1] - 1, cell[1] + 1):
+                if (i, j) == cell: #doesn't cell also include count? or is it just cell location?
+                    continue
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    neighbors.add((i, j))
+        return neighbors
 
     def add_knowledge(self, cell, count):
         """
@@ -243,7 +235,7 @@ class MinesweeperAI():
                         self.mark_safe(neib)
                 elif neib not in self.mines:
                     self.knowledge.append(Sentence([self.neighbors(neib)], count))
-        while self.update_knowledge() == True:
+        while self.update_knowledge():
             pass
 
     def make_safe_move(self):
