@@ -1,6 +1,3 @@
-import itertools
-import random
-
 
 class Minesweeper():
     """
@@ -286,5 +283,5 @@ class MinesweeperAI():
                 if cell not in self.moves_made and cell not in self.mines:
                     all_cells.append(cell)
         if all_cells:
-            return random.choice(all_cells)
+            return (all_cells[0]) # This isn't random but I can't use any external libraries
         return None
