@@ -108,23 +108,18 @@ class Sentence():
         """
         Returns the set of all cells in self.cells known to be mines.
         """
-        mines = set()
-        for cell in self.cells:
-            if Minesweeper.is_mine(self,cell):
-                mines.add(cell)
-        return mines
+        if self.count == len(self.cells):
+            return self.cells.copy()
+        return set()
         
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
         """
-        
-        safes = set()
-        for cell in self.cells:
-            if not Minesweeper.is_mine(self,cell):
-                safes.add(cell)
-        return safes
+        if self.count == 0:
+            return self.cells.copy()
+        return set()
 
     def mark_mine(self, cell):
         """
@@ -132,7 +127,8 @@ class Sentence():
         a cell is known to be a mine.
         """
         if cell in self.cells:
-            cell.is_mine = True
+            self.cells.remove(cell)
+            self.count -= 1
 
 
     def mark_safe(self, cell):
@@ -141,7 +137,7 @@ class Sentence():
         a cell is known to be safe.
         """
         if cell in self.cells:
-            cell.is_mine = False
+            self.cells.remove(cell)
 
 
 
@@ -175,17 +171,19 @@ class MinesweeperAI():
 
         self.knowledge = [sentence for sentence in self.knowledge if sentence.cells]
 
-        new_inferences = []
-        for sentence1 in self.knowledge:
+        for sentence1 in list(self.knowledge):
             if sentence1.count == len(sentence1.cells):
-                for cell in sentence1.cells:
-                    self.mines.add(cell)
-                    changed = True
+                for cell in list(sentence1.cells):
+                    if cell not in self.mines:
+                        self.mark_mine(cell)
+                        changed = True
             elif sentence1.count == 0:
-                for cell in sentence1.cells:
-                    self.safes.add(cell)
-                    changed = True
+                for cell in list(sentence1.cells):
+                    if cell not in self.safes:
+                        self.mark_safe(cell)
+                        changed = True
 
+        new_inferences = []
         for sentence1 in self.knowledge:
             for sentence2 in self.knowledge:
                 if sentence1 == sentence2 or not sentence1.cells < sentence2.cells:
@@ -196,10 +194,9 @@ class MinesweeperAI():
                 )
                 if inferred.cells and inferred not in self.knowledge and inferred not in new_inferences:
                     new_inferences.append(inferred)
+                    changed = True
 
-        if new_inferences:
-            self.knowledge.extend(new_inferences)
-            changed = True
+        self.knowledge.extend(new_inferences)
         return changed
 
     def mark_mine(self, cell):
@@ -207,18 +204,20 @@ class MinesweeperAI():
         Marks a cell as a mine, and updates all knowledge
         to mark that cell as a mine as well.
         """
-        self.mines.add(cell)
-        while self.update_knowledge():
-            pass
+        if cell not in self.mines:
+            self.mines.add(cell)
+            for sentence in self.knowledge:
+                sentence.mark_mine(cell)
 
     def mark_safe(self, cell):
         """
         Marks a cell as safe, and updates all knowledge
         to mark that cell as safe as well.
         """
-        self.safes.add(cell)
-        while self.update_knowledge():
-            pass
+        if cell not in self.safes:
+            self.safes.add(cell)
+            for sentence in self.knowledge:
+                sentence.mark_safe(cell)
 
     def neighbors(self, cell):
         """
@@ -227,7 +226,7 @@ class MinesweeperAI():
         neighbors = set()
         for i in range(cell[0] - 1, cell[0] + 2):
             for j in range(cell[1] - 1, cell[1] + 2):
-                if (i, j) == cell: #FIXME: what about corners?
+                if (i, j) == cell: 
                     continue
                 if 0 <= i < self.height and 0 <= j < self.width:
                     neighbors.add((i, j))
